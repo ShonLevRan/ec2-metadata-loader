@@ -145,7 +145,7 @@ def packet_processing_thread():
         print(json_string)
 
 # Start the Prometheus metrics server
-start_http_server(8877)
+start_http_server(8000)
 
 # Start the packet capture and processing threads
 capture_thread = threading.Thread(target=packet_capture_thread, daemon=True)
