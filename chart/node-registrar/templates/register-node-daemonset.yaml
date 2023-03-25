@@ -1,19 +1,21 @@
+{{-  $imageTag := printf "%s:%s" .Values.image.repo .Values.image.tag -}}
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: register-node
+  name: {{ .Values.name }}
 spec:
   selector:
     matchLabels:
-      app: register-node
+      app: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: register-node
+        app: {{ .Values.name }}
     spec:
       containers:
-      - name: register-node
-        image: ghcr.io/shonlevran/ec2-metadata-loader:v0.0.1
+      - name: {{ .Values.name }}
+        image: {{ $imageTag }}
         imagePullPolicy: Always
         volumeMounts:
         - name: node-data
