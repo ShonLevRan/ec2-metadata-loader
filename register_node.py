@@ -9,6 +9,11 @@ import pyshark
 import queue
 import threading
 import time
+from prometheus_client import start_http_server, Counter, Gauge
+
+# Define Prometheus metrics
+incoming_bytes = Counter('network_incoming_bytes', 'Total incoming network bytes', ['src', 'dst'])
+outgoing_bytes = Counter('network_outgoing_bytes', 'Total outgoing network bytes', ['src', 'dst'])
 
 METADATA_BASE_URL = "http://169.254.169.254/latest/"
 METADATA_TIMEOUT = 1.0
@@ -105,6 +110,12 @@ def packet_processing_thread():
                     traffic[direction][pair_key] = 0
                 traffic[direction][pair_key] += length
 
+                # Update Prometheus metrics
+                if direction == 'incoming':
+                    incoming_bytes.labels(src=src, dst=dst).inc(length)
+                elif direction == 'outgoing':
+                    outgoing_bytes.labels(src=src, dst=dst).inc(length)
+
             except AttributeError:
                 # Skip packets without IP information
                 continue
@@ -132,6 +143,9 @@ def packet_processing_thread():
         # Serialize the dictionary to a JSON string and print the diff
         json_string = json.dumps(traffic_dict, indent=4)
         print(json_string)
+
+# Start the Prometheus metrics server
+start_http_server(8000)
 
 # Start the packet capture and processing threads
 capture_thread = threading.Thread(target=packet_capture_thread, daemon=True)
