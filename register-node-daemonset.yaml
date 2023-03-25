@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: register-node
+spec:
+  selector:
+    matchLabels:
+      app: register-node
+  template:
+    metadata:
+      labels:
+        app: register-node
+    spec:
+      containers:
+      - name: register-node
+        image: <your_dockerhub_username>/register-node
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: node-data
+          mountPath: /app/node_data.json
+          subPath: node
