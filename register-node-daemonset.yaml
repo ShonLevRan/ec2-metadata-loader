@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: register-node
-        image: <your_dockerhub_username>/register-node
+        image: ghcr.io/shonlevran/ec2-metadata-loader:v0.0.1
         imagePullPolicy: Always
         volumeMounts:
         - name: node-data
