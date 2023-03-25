@@ -36,5 +36,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ github.sha }}
-          build-args: COMMIT_HASH=${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ github.sha:0:7 }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest
+          build-args: |
+            COMMIT_HASH=${{ github.sha }}
+            IMAGE_TAG=latest
