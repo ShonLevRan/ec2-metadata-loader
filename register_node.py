@@ -12,8 +12,8 @@ import time
 from prometheus_client import start_http_server, Counter
 
 # Define Prometheus metrics
-incoming_bytes = Counter('network_incoming_bytes', 'Total incoming network bytes', ['src', 'dst'])
-outgoing_bytes = Counter('network_outgoing_bytes', 'Total outgoing network bytes', ['src', 'dst'])
+incoming_bytes = Counter('network_incoming_bytes', 'Total incoming network bytes', ['src', 'dst', 'node_name', 'node_ip', 'availability_zone'])
+outgoing_bytes = Counter('network_outgoing_bytes', 'Total outgoing network bytes', ['src', 'dst', 'node_name', 'node_ip', 'availability_zone'])
 
 METADATA_BASE_URL = "http://169.254.169.254/latest/"
 METADATA_TIMEOUT = 1.0
@@ -47,22 +47,23 @@ def register_node():
     node_name = get_metadata("hostname", token)
     node_ip = get_metadata("local-ipv4", token)
     availability_zone = get_metadata("placement/availability-zone", token)
+    availability_zone_id = get_metadata("placement/availability-zone-id", token)
 
     if node_name and node_ip and availability_zone:
-        node_data = {
+        return {
             "node_name": node_name,
             "node_ip": node_ip, 
-            "availability_zone": availability_zone
+            "availability_zone": availability_zone,
+            "availability_zone_id": availability_zone_id
         }
 
-        with open("node_data.json", "w") as f:
-            json.dump(node_data, f)
-
-        print(f"Node data saved to node_data.json:\n{json.dumps(node_data, indent=2)}")
     else:
         print("Failed to fetch metadata. Exiting.")
 
-register_node()
+node_metadata = register_node()
+if not node_metadata:
+    print("Failed to fetch node_metadata. Exiting.")
+    pass
 
 # Configure the interface
 interface = ['any']
@@ -112,9 +113,9 @@ def packet_processing_thread():
 
                 # Update Prometheus metrics
                 if direction == 'incoming':
-                    incoming_bytes.labels(src=src, dst=dst).inc(length)
+                    incoming_bytes.labels(src=src, dst=dst, node_name=node_metadata["node_name"], node_ip=node_metadata["node_ip"], availability_zone=node_metadata["availability_zone"]).inc(length)
                 elif direction == 'outgoing':
-                    outgoing_bytes.labels(src=src, dst=dst).inc(length)
+                    outgoing_bytes.labels(src=src, dst=dst, node_name=node_metadata["node_name"], node_ip=node_metadata["node_ip"], availability_zone=node_metadata["availability_zone"]).inc(length)
 
             except AttributeError:
                 # Skip packets without IP information
