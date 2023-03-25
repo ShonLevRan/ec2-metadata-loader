@@ -9,7 +9,7 @@ import pyshark
 import queue
 import threading
 import time
-from prometheus_client import start_http_server, Counter, Gauge
+from prometheus_client import start_http_server, Counter
 
 # Define Prometheus metrics
 incoming_bytes = Counter('network_incoming_bytes', 'Total incoming network bytes', ['src', 'dst'])
