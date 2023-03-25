@@ -31,14 +31,18 @@ jobs:
         env:
           IMAGE_NAME: '${{ github.repository }}'
 
+      - name: Set tag
+        id: tag
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ github.sha:0:7 }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ steps.tag.outputs.sha_short }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest
           build-args: |
-            COMMIT_HASH=${{ github.sha }}
+            COMMIT_HASH=${{ steps.tag.outputs.sha_short }}
             IMAGE_TAG=latest
