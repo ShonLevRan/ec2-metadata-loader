@@ -13,6 +13,7 @@ spec:
       labels:
         app: {{ .Values.name }}
     spec:
+      hostNetwork: true
       containers:
       - name: {{ .Values.name }}
         image: {{ $imageTag }}
