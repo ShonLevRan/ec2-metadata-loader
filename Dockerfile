@@ -12,5 +12,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY register_node.py .
 
-CMD ["python", "register_node.py"]
+ENTRYPOINT ["python", "register_node.py"]
 
