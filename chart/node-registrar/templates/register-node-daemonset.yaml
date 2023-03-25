@@ -21,3 +21,6 @@ spec:
         securityContext:
           privileged: true
         command: ["python3", "-u", "/app/register_node.py"]
+        ports:
+          - name: "metrics"
+            containerPort: 8000
