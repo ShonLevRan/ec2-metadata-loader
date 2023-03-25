@@ -1,4 +1,4 @@
 name: register-node
 image:
   repo: ghcr.io/shonlevran/ec2-metadata-loader
-  tag: v0.0.1
+  tag: main

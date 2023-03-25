@@ -17,7 +17,3 @@ spec:
       - name: {{ .Values.name }}
         image: {{ $imageTag }}
         imagePullPolicy: Always
-        volumeMounts:
-        - name: node-data
-          mountPath: /app/node_data.json
-          subPath: node
