@@ -17,3 +17,5 @@ spec:
       - name: {{ .Values.name }}
         image: {{ $imageTag }}
         imagePullPolicy: Always
+        securityContext:
+          privileged: true

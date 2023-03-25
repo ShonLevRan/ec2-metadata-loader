@@ -5,6 +5,10 @@ import json
 import boto3
 import requests
 from requests.exceptions import RequestException
+import pyshark
+import queue
+import threading
+import time
 
 METADATA_BASE_URL = "http://169.254.169.254/latest/"
 METADATA_TIMEOUT = 1.0
@@ -38,15 +42,12 @@ def register_node():
     node_name = get_metadata("hostname", token)
     node_ip = get_metadata("local-ipv4", token)
     availability_zone = get_metadata("placement/availability-zone", token)
-    # pods_ip_ranges = get_metadata("network/interfaces/macs/*/subnet-ipv4-cidr-block", token)
 
-    # if node_name and node_ip and pods_ip_ranges:
     if node_name and node_ip and availability_zone:
         node_data = {
             "node_name": node_name,
             "node_ip": node_ip, 
             "availability_zone": availability_zone
-            # "pods_ip_ranges": pods_ip_ranges.split("\n")
         }
 
         with open("node_data.json", "w") as f:
@@ -57,3 +58,90 @@ def register_node():
         print("Failed to fetch metadata. Exiting.")
 
 register_node()
+
+# Configure the interface
+interface = ['any']
+
+# Initialize a queue to store captured packets
+packet_queue = queue.Queue()
+
+# Thread to continuously capture packets
+def packet_capture_thread():
+    def packet_handler(packet):
+        packet_queue.put(packet)
+
+    capture = pyshark.LiveCapture(interface=interface)
+    capture.apply_on_packets(packet_handler)
+
+# Thread to process and aggregate network data every minute
+def packet_processing_thread():
+    while True:
+        start_time = time.time()
+
+        # Initialize data structures to store traffic information
+        traffic = {
+            'incoming': {},
+            'outgoing': {},
+        }
+
+        # Process packets in the last minute
+        while time.time() - start_time < 5:
+            try:
+                packet = packet_queue.get(timeout=1)
+            except queue.Empty:
+                continue
+
+            try:
+                src = packet.ip.src
+                dst = packet.ip.dst
+                length = int(packet.length)
+
+                # Determine the direction of the traffic (incoming or outgoing)
+                direction = 'outgoing' if src.startswith('10.') or src.startswith('192.168.') else 'incoming'
+
+                # Update traffic information
+                pair_key = (src, dst)
+                if pair_key not in traffic[direction]:
+                    traffic[direction][pair_key] = 0
+                traffic[direction][pair_key] += length
+
+            except AttributeError:
+                # Skip packets without IP information
+                continue
+
+        # Create a dictionary object with the traffic information
+        traffic_dict = {
+            'incoming': [],
+            'outgoing': [],
+        }
+
+        for (src, dst), bytes_count in traffic['incoming'].items():
+            traffic_dict['incoming'].append({
+                'src': src,
+                'dst': dst,
+                'bytes_count': bytes_count
+            })
+
+        for (src, dst), bytes_count in traffic['outgoing'].items():
+            traffic_dict['outgoing'].append({
+                'src': src,
+                'dst': dst,
+                'bytes_count': bytes_count
+            })
+
+        # Serialize the dictionary to a JSON string and print the diff
+        json_string = json.dumps(traffic_dict, indent=4)
+        print(json_string)
+
+# Start the packet capture and processing threads
+capture_thread = threading.Thread(target=packet_capture_thread, daemon=True)
+processing_thread = threading.Thread(target=packet_processing_thread, daemon=True)
+capture_thread.start()
+processing_thread.start()
+
+# Keep the main thread alive
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    pass
