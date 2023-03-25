@@ -75,7 +75,7 @@ def packet_capture_thread():
     def packet_handler(packet):
         packet_queue.put(packet)
 
-    capture = pyshark.LiveCapture(interface=interface)
+    capture = pyshark.LiveCapture(interface=interface, bpf_filter='ip')
     capture.apply_on_packets(packet_handler)
 
 # Thread to process and aggregate network data every minute
