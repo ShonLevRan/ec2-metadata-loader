@@ -91,7 +91,7 @@ def packet_processing_thread():
         }
 
         # Process packets in the last minute
-        while time.time() - start_time < 5:
+        while time.time() - start_time < 60:
             try:
                 packet = packet_queue.get(timeout=1)
             except queue.Empty:
