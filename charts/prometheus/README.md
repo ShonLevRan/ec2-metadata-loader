@@ -1,0 +1,1 @@
+helm upgrade -i prometheus --namespace prometheus --create-namespace prometheus-community/kube-prometheus-stack --values=./charts/prometheus/values.yaml

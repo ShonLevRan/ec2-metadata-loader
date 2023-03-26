@@ -1,0 +1,4 @@
+prometheusSpec:
+  podMonitorSelector:
+    matchLabels:
+      app: zeus
